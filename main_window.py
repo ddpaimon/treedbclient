@@ -7,7 +7,7 @@ import threading
 from popup_window import PopupWindow
 from events import EventsManager, AddEvent, DeleteEvent, EditEvent
 
-server = 'http://localhost:8080/'
+server = 'https://treedb.herokuapp.com/'
 
 
 def run_in_thread(fn):
