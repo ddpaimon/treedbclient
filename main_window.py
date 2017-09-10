@@ -5,8 +5,9 @@ import requests
 import json
 import threading
 from popup_window import PopupWindow
+from events import EventsManager, AddEvent, DeleteEvent, EditEvent
 
-server = 'https://treedb.herokuapp.com/'
+server = 'http://localhost:8080/'
 
 
 def run_in_thread(fn):
@@ -32,12 +33,19 @@ def update(tree):
     return json.loads(r.text)['tree']
 
 
+def update_events(events):
+    r = requests.post(server + 'tree/update/events/', json=events)
+    return json.loads(r.text)['nodes']
+
+
 class MainWindow(object):
     db_tree_data = list()
     cached_tree_data = list()
     entry_window = object
 
     def __init__(self, root):
+        self.events_manager = EventsManager()
+
         self.root = root
 
         # Base layer
@@ -68,6 +76,9 @@ class MainWindow(object):
 
         self.buttonsFrame.applyButton = ttk.Button(self.buttonsFrame, text='Apply', command=self.apply)
         self.buttonsFrame.applyButton.grid(row=2, column=1)
+
+        self.buttonsFrame.applyEventsButton = ttk.Button(self.buttonsFrame, text='Apply events', command=self.apply_events)
+        # self.buttonsFrame.applyEventsButton.grid(row=3, column=1)
 
         # Trees
         self.cachedTreeFrame.cachedTree = ttk.Treeview(self.cachedTreeFrame)
@@ -214,9 +225,11 @@ class MainWindow(object):
                 return
             item = self.cachedTreeFrame.cachedTree.item(cache_selected_items[0])
             node_name = self.entry_window.value
+            node_id = str(uuid.uuid4())
             root_node_data = self.find_node_data_by_uuid(item['values'][0], self.cached_tree_data)
+            self.events_manager.append_event(AddEvent(node_id, root_node_data['node']['id'], node_name))
             if not root_node_data['node']['deleted']:
-                node_data = {'name': node_name, 'root': root_node_data['node']['id'], 'id': None, 'deleted': False}
+                node_data = {'name': node_name, 'root': root_node_data['node']['id'], 'id': node_id, 'deleted': False}
                 self.append_to_cache(node_data)
 
     @run_in_thread
@@ -237,6 +250,7 @@ class MainWindow(object):
             return
         item = self.cachedTreeFrame.cachedTree.item(cache_selected_items[0])
         node_data = self.find_node_data_by_uuid(item['values'][0], self.cached_tree_data)
+        self.events_manager.append_event(DeleteEvent(node_data['node']['id']))
         if not node_data['node']['deleted']:
             self.delete_subtree(node_data)
             self.redraw_cached()
@@ -256,6 +270,7 @@ class MainWindow(object):
             node_name = self.entry_window.value
             node_data = self.find_node_data_by_uuid(item['values'][0], self.cached_tree_data)
             node_data['node']['name'] = node_name
+            self.events_manager.append_event(EditEvent(node_data['node']['id'], node_name))
             self.redraw_cached()
 
     def _refill_new(self, children):
@@ -276,5 +291,16 @@ class MainWindow(object):
 
         self.redraw_cached()
 
+    @run_in_thread
+    def apply_events(self):
+        events = self.events_manager.serialize_events()
+        print(events)
+        # self.cached_tree_data = update_events(events)
+        update_events(events)
 
+        self.db_tree_data = get_all_tree()
+        self.redraw_db()
 
+        self.redraw_cached()
+
+        self.events_manager.clear()
