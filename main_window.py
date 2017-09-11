@@ -7,7 +7,7 @@ import threading
 from popup_window import PopupWindow
 from events import EventsManager, AddEvent, DeleteEvent, EditEvent
 
-server = 'https://treedb.herokuapp.com/'
+server = 'http://127.0.0.1:8080/'
 
 
 def run_in_thread(fn):
@@ -229,7 +229,7 @@ class MainWindow(object):
             root_node_data = self.find_node_data_by_uuid(item['values'][0], self.cached_tree_data)
             self.events_manager.append_event(AddEvent(node_id, root_node_data['node']['id'], node_name))
             if not root_node_data['node']['deleted']:
-                node_data = {'name': node_name, 'root': root_node_data['node']['id'], 'id': node_id, 'deleted': False}
+                node_data = {'name': node_name, 'root': root_node_data['node']['id'], 'id': None, 'deleted': False}
                 self.append_to_cache(node_data)
 
     @run_in_thread
