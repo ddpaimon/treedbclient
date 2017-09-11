@@ -1,7 +1,7 @@
 # Treedb client
 
 ## Requirements:
-Python 3.6
+Python 3.6 <br />
 requests 2.18.4
 
 ## Launch:
