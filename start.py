@@ -2,7 +2,6 @@ from tkinter import *
 from main_window import MainWindow
 
 
-
 if __name__ == "__main__":
     root = Tk()
     root.columnconfigure(0, weight=1)

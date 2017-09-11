@@ -7,7 +7,8 @@ import threading
 from popup_window import PopupWindow
 from events import EventsManager, AddEvent, DeleteEvent, EditEvent
 
-server = 'http://127.0.0.1:8080/'
+server = 'https://treedb.herokuapp.com/'
+# server = 'http://127.0.0.1:8080/'
 
 
 def run_in_thread(fn):
@@ -100,6 +101,10 @@ class MainWindow(object):
 
     @run_in_thread
     def load_db_data(self):
+        requests.get(server + 'tree/clear')
+        with open('testdb.json') as data_file:
+            data = json.load(data_file)
+        update([data])
         self.db_tree_data = get_all_tree()
         self.redraw_db()
 
@@ -182,7 +187,6 @@ class MainWindow(object):
                 res = self.find_node_data_by_uuid(node_uuid, child['children'])
                 if res is not None:
                     break
-        # print(res)
         return res
 
     def find_node_data_by_id(self, node_id, subtree):
@@ -195,7 +199,6 @@ class MainWindow(object):
                 res = self.find_node_data_by_id(node_id, child['children'])
                 if res is not None:
                     break
-        # print(res)
         return res
 
     def node_exists(self, node_id, subtree):
@@ -256,6 +259,7 @@ class MainWindow(object):
             self.redraw_cached()
 
     def reset(self):
+        self.load_db_data()
         self.cached_tree_data = list()
         self.redraw_cached()
 
@@ -263,7 +267,6 @@ class MainWindow(object):
         cache_selected_items = self.cachedTreeFrame.cachedTree.selection()
         if len(cache_selected_items) != 0:
             item = self.cachedTreeFrame.cachedTree.item(cache_selected_items[0])
-            # print(item['text'])
             self.popup(item['text'])
             if len(self.entry_window.value) == 0:
                 return
@@ -294,8 +297,7 @@ class MainWindow(object):
     @run_in_thread
     def apply_events(self):
         events = self.events_manager.serialize_events()
-        print(events)
-        # self.cached_tree_data = update_events(events)
+
         update_events(events)
 
         self.db_tree_data = get_all_tree()
