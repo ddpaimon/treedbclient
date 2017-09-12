@@ -267,11 +267,13 @@ class MainWindow(object):
         cache_selected_items = self.cachedTreeFrame.cachedTree.selection()
         if len(cache_selected_items) != 0:
             item = self.cachedTreeFrame.cachedTree.item(cache_selected_items[0])
+            node_data = self.find_node_data_by_uuid(item['values'][0], self.cached_tree_data)
+            if node_data['node']['deleted'] is True:
+                return
             self.popup(item['text'])
             if len(self.entry_window.value) == 0:
                 return
             node_name = self.entry_window.value
-            node_data = self.find_node_data_by_uuid(item['values'][0], self.cached_tree_data)
             node_data['node']['name'] = node_name
             self.events_manager.append_event(EditEvent(node_data['node']['id'], node_name))
             self.redraw_cached()
